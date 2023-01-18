@@ -23,6 +23,9 @@ button:hover {
     padding: 1rem;
     display:grid;
     grid-template: repeat(3, 50px) / repeat(3, 50px);
-    align-items: center;
     justify-content: center;
+}
+
+.board-container button {
+    
 }
