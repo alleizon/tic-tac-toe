@@ -21,6 +21,8 @@ const Game = (() => {
         gameboard[row][col] = "";
       }
     }
+    turns = 0;
+    curPlayer = player1;
   };
 
   const checkWin = (x, y) => {
@@ -43,7 +45,11 @@ const Game = (() => {
         break;
       }
     }
-    if ((+x === 0 && +y === 0) || (+x === 2 && +y === 2)) {
+    if (
+      (+x === 0 && +y === 0) ||
+      (+x === 1 && +y === 1) ||
+      (+x === 2 && +y === 2)
+    ) {
       for (let diag = 0; diag < 3; diag += 1) {
         if (gameboard[diag][diag] === curPlayer.name) {
           marks += 1;
@@ -54,7 +60,11 @@ const Game = (() => {
         }
       }
     }
-    if ((+x === 0 && +y === 2) || (+x === 2 && +y === 0)) {
+    if (
+      (+x === 0 && +y === 2) ||
+      (+x === 1 && +y === 1) ||
+      (+x === 2 && +y === 0)
+    ) {
       for (let diag = 0; diag < 3; diag += 1) {
         if (gameboard[diag][2 - diag] === curPlayer.name) {
           marks += 1;
@@ -67,6 +77,8 @@ const Game = (() => {
     }
     return null;
   };
+
+  const getCurrentPlayer = () => curPlayer;
 
   const playTurn = (e) => {
     const { x } = e.target.dataset;
@@ -90,23 +102,29 @@ const Game = (() => {
       return;
     }
     curPlayer = curPlayer.name === 1 ? player2 : player1;
+    displayController.displayPlayer(curPlayer);
   };
 
-  return { playTurn };
+  return { playTurn, resetBoard, getCurrentPlayer };
 })();
 
 const displayController = (() => {
-  const body = document.querySelector("body");
-  const div = document.createElement("div");
-  div.classList.add("board-container");
-  body.appendChild(div);
+  const containerDiv = document.querySelector(".board-container");
+  const displayName = document.querySelector(".display-name");
+  const startBtn = document.querySelector("#start-btn");
+  const resetBtn = document.querySelector("#reset-btn");
 
-  const addBtnListeners = () => {
+  const addBtnListeners = (e) => {
     const btns = Array.from(document.querySelectorAll(".game-btn"));
     btns.forEach((element) => {
       element.addEventListener("click", Game.playTurn);
     });
+    const player = Game.getCurrentPlayer();
+    if (e.target.id === "start-btn") {
+      displayName.textContent = `Player ${player.name}'s turn`;
+    } else displayName.textContent = `Player ${player.name}'s turn`;
   };
+
   const removeListeners = () => {
     const btns = Array.from(document.querySelectorAll(".game-btn"));
     btns.forEach((element) => {
@@ -119,29 +137,44 @@ const displayController = (() => {
       for (let j = 0; j < 3; j += 1) {
         const btn = document.createElement("button");
         btn.classList.add("game-btn");
+        if (i === 0) btn.classList.add("top-row");
+        if (i === 2) btn.classList.add("bottom-row");
+        if (j === 0) btn.classList.add("left-col");
+        if (j === 2) btn.classList.add("right-col");
         btn.dataset.x = i;
         btn.dataset.y = j;
         btn.setAttribute("type", "button");
-        div.appendChild(btn);
+        containerDiv.appendChild(btn);
       }
     }
-    addBtnListeners();
   };
 
   const declareTie = () => {
-    const tieDiv = document.createElement("div");
-    tieDiv.textContent = "Game is a tie";
-    body.appendChild(tieDiv);
+    displayName.textContent = "Game is a tie!";
     removeListeners();
   };
   const declareWinner = (winner) => {
-    const winDiv = document.createElement("div");
-    winDiv.textContent = `Player ${winner.name} wins`;
-    body.appendChild(winDiv);
+    displayName.textContent = `Player ${winner.name} wins!`;
     removeListeners();
   };
 
-  return { createBoard, declareTie, declareWinner };
+  const resetBoard = (e) => {
+    const btns = Array.from(document.querySelectorAll(".game-btn"));
+    btns.forEach((element) => {
+      element.textContent = "";
+    });
+    Game.resetBoard();
+    addBtnListeners(e);
+  };
+
+  const displayPlayer = (currentPlayer) => {
+    displayName.textContent = `Player ${currentPlayer.name}'s turn`;
+  };
+
+  startBtn.addEventListener("click", addBtnListeners);
+  resetBtn.addEventListener("click", resetBoard);
+
+  return { createBoard, declareTie, declareWinner, displayPlayer };
 })();
 
 displayController.createBoard();
