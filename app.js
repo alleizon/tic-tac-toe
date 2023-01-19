@@ -79,10 +79,15 @@ const Game = (() => {
     if (winner) {
       curPlayer.score += 1;
       resetBoard();
-      displayController.declareWinner();
-    } else if (turns === 9) {
+      displayController.declareWinner(winner);
+      curPlayer = player1;
+      return;
+    }
+    if (turns === 9) {
       displayController.declareTie();
       resetBoard();
+      curPlayer = player1;
+      return;
     }
     curPlayer = curPlayer.name === 1 ? player2 : player1;
   };
@@ -96,21 +101,46 @@ const displayController = (() => {
   div.classList.add("board-container");
   body.appendChild(div);
 
+  const addBtnListeners = () => {
+    const btns = Array.from(document.querySelectorAll(".game-btn"));
+    btns.forEach((element) => {
+      element.addEventListener("click", Game.playTurn);
+    });
+  };
+  const removeListeners = () => {
+    const btns = Array.from(document.querySelectorAll(".game-btn"));
+    btns.forEach((element) => {
+      element.removeEventListener("click", Game.playTurn);
+    });
+  };
+
   const createBoard = () => {
     for (let i = 0; i < 3; i += 1) {
       for (let j = 0; j < 3; j += 1) {
         const btn = document.createElement("button");
+        btn.classList.add("game-btn");
         btn.dataset.x = i;
         btn.dataset.y = j;
-        btn.addEventListener("click", Game.playTurn);
         btn.setAttribute("type", "button");
         div.appendChild(btn);
       }
     }
+    addBtnListeners();
   };
 
-  const declareTie = () => {};
-  const declareWinner = () => {};
+  const declareTie = () => {
+    const tieDiv = document.createElement("div");
+    tieDiv.textContent = "Game is a tie";
+    body.appendChild(tieDiv);
+    removeListeners();
+  };
+  const declareWinner = (winner) => {
+    const winDiv = document.createElement("div");
+    winDiv.textContent = `Player ${winner.name} wins`;
+    body.appendChild(winDiv);
+    removeListeners();
+  };
+
   return { createBoard, declareTie, declareWinner };
 })();
 
