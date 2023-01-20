@@ -1,6 +1,6 @@
-function Player(name, symbol) {
+function Player(name, symbol, type) {
   const score = 0;
-  return { name, symbol, score };
+  return { name, symbol, score, type };
 }
 
 const Game = (() => {
@@ -10,10 +10,10 @@ const Game = (() => {
     ["", "", ""],
   ];
 
-  const player1 = Player(1, "X");
-  const player2 = Player(2, "O");
+  const player1 = Player(1, "X", "human");
   let curPlayer = null;
   let turns = 0;
+  let opponent;
 
   const resetBoard = () => {
     for (let row = 0; row < 3; row += 1) {
@@ -78,6 +78,35 @@ const Game = (() => {
     return null;
   };
 
+  const checkGameEnd = (x, y) => {
+    const winner = checkWin(x, y);
+    turns += 1;
+    if (winner) {
+      curPlayer.score += 1;
+      displayController.declareWinner(winner);
+      resetBoard();
+      return 1;
+    }
+    if (turns === 9) {
+      displayController.declareTie();
+      resetBoard();
+      return 1;
+    }
+    return 0;
+  };
+
+  const playComputerTurn = () => {
+    const x = Math.floor(Math.random() * 3);
+    const y = Math.floor(Math.random() * 3);
+    if (!gameboard[x][y]) {
+      gameboard[x][y] = opponent.name;
+      displayController.displayComputerMove(x, y, opponent.symbol);
+      if (checkGameEnd(x, y)) return;
+      curPlayer = player1;
+      displayController.displayPlayer(curPlayer);
+    } else playComputerTurn();
+  };
+
   const playTurn = (e) => {
     if (!curPlayer) curPlayer = player1;
     const { x } = e.target.dataset;
@@ -85,26 +114,29 @@ const Game = (() => {
     if (gameboard[x][y]) return;
     gameboard[x][y] = curPlayer.name;
     e.target.textContent = curPlayer.symbol;
-    const winner = checkWin(x, y);
-    turns += 1;
-    if (winner) {
-      curPlayer.score += 1;
-      displayController.declareWinner(winner);
-      resetBoard();
-      return;
-    }
-    if (turns === 9) {
-      displayController.declareTie();
-      resetBoard();
-      return;
-    }
-    curPlayer = curPlayer.name === 1 ? player2 : player1;
+    if (checkGameEnd(x, y)) return;
+    curPlayer = curPlayer.name === 1 ? opponent : player1;
     displayController.displayPlayer(curPlayer);
+    if (opponent.type === "computer" && curPlayer.name === opponent.name)
+      playComputerTurn();
   };
 
   const getCurrentPlayer = () => curPlayer;
 
-  return { playTurn, resetBoard, getCurrentPlayer };
+  const changeOpponent = () => {
+    //
+  };
+  const createOpponent = (() => {
+    const player2 = Player(2, "O", "computer");
+    opponent = player2;
+  })();
+
+  return {
+    playTurn,
+    resetBoard,
+    getCurrentPlayer,
+    changeOpponent,
+  };
 })();
 
 const displayController = (() => {
@@ -115,7 +147,6 @@ const displayController = (() => {
 
   const addBtnListeners = (e) => {
     const player = Game.getCurrentPlayer();
-    console.log(player);
     if (!player) resetDisplay();
     const btns = Array.from(document.querySelectorAll(".game-btn"));
     btns.forEach((element) => {
@@ -180,12 +211,21 @@ const displayController = (() => {
     displayName.textContent = `Player ${currentPlayer.name}'s turn`;
   };
 
+  const displayComputerMove = (x, y, symbol) => {
+    const btn = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+    btn.textContent = symbol;
+  };
+
   startBtn.addEventListener("click", addBtnListeners);
   resetBtn.addEventListener("click", resetBoard);
 
-  return { createBoard, declareTie, declareWinner, displayPlayer };
+  return {
+    createBoard,
+    declareTie,
+    declareWinner,
+    displayPlayer,
+    displayComputerMove,
+  };
 })();
 
 displayController.createBoard();
-
-// fix start button after game is ended (check tie)
