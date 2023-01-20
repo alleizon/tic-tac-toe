@@ -179,11 +179,13 @@ const displayController = (() => {
   const declareTie = () => {
     const displayName = document.querySelector(".display-name");
     displayName.textContent = "Game is a tie!";
+    displayName.classList.add("end");
     removeListeners();
   };
   const declareWinner = (winner) => {
     const displayName = document.querySelector(".display-name");
     displayName.textContent = `Player ${winner.name} wins!`;
+    displayName.classList.add("end");
     removeListeners();
   };
 
@@ -191,14 +193,18 @@ const displayController = (() => {
     const btns = Array.from(document.querySelectorAll(".game-btn"));
     btns.forEach((element) => {
       element.textContent = "";
+      element.classList.remove("text-transition");
     });
+    document.querySelector(".display-name").classList.remove("end");
   };
 
   const resetBoard = (e) => {
     const btns = Array.from(document.querySelectorAll(".game-btn"));
     btns.forEach((element) => {
       element.textContent = "";
+      element.classList.remove("text-transition");
     });
+    document.querySelector(".display-name").classList.remove("end");
     Game.resetBoard();
     addBtnListeners(e);
   };
