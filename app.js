@@ -12,7 +12,7 @@ const Game = (() => {
 
   const player1 = Player(1, "X");
   const player2 = Player(2, "O");
-  let curPlayer = player1;
+  let curPlayer = null;
   let turns = 0;
 
   const resetBoard = () => {
@@ -22,7 +22,7 @@ const Game = (() => {
       }
     }
     turns = 0;
-    curPlayer = player1;
+    curPlayer = null;
   };
 
   const checkWin = (x, y) => {
@@ -78,9 +78,8 @@ const Game = (() => {
     return null;
   };
 
-  const getCurrentPlayer = () => curPlayer;
-
   const playTurn = (e) => {
+    if (!curPlayer) curPlayer = player1;
     const { x } = e.target.dataset;
     const { y } = e.target.dataset;
     if (gameboard[x][y]) return;
@@ -90,20 +89,20 @@ const Game = (() => {
     turns += 1;
     if (winner) {
       curPlayer.score += 1;
-      resetBoard();
       displayController.declareWinner(winner);
-      curPlayer = player1;
+      resetBoard();
       return;
     }
     if (turns === 9) {
       displayController.declareTie();
       resetBoard();
-      curPlayer = player1;
       return;
     }
     curPlayer = curPlayer.name === 1 ? player2 : player1;
     displayController.displayPlayer(curPlayer);
   };
+
+  const getCurrentPlayer = () => curPlayer;
 
   return { playTurn, resetBoard, getCurrentPlayer };
 })();
@@ -115,14 +114,17 @@ const displayController = (() => {
   const resetBtn = document.querySelector("#reset-btn");
 
   const addBtnListeners = (e) => {
+    const player = Game.getCurrentPlayer();
+    console.log(player);
+    if (!player) resetDisplay();
     const btns = Array.from(document.querySelectorAll(".game-btn"));
     btns.forEach((element) => {
       element.addEventListener("click", Game.playTurn);
     });
-    const player = Game.getCurrentPlayer();
+
     if (e.target.id === "start-btn") {
-      displayName.textContent = `Player ${player.name}'s turn`;
-    } else displayName.textContent = `Player ${player.name}'s turn`;
+      displayName.textContent = `Player 1's turn`;
+    } else displayName.textContent = `Player 1's turn`;
   };
 
   const removeListeners = () => {
@@ -158,6 +160,13 @@ const displayController = (() => {
     removeListeners();
   };
 
+  const resetDisplay = () => {
+    const btns = Array.from(document.querySelectorAll(".game-btn"));
+    btns.forEach((element) => {
+      element.textContent = "";
+    });
+  };
+
   const resetBoard = (e) => {
     const btns = Array.from(document.querySelectorAll(".game-btn"));
     btns.forEach((element) => {
@@ -178,3 +187,5 @@ const displayController = (() => {
 })();
 
 displayController.createBoard();
+
+// fix start button after game is ended (check tie)
