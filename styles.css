@@ -73,6 +73,15 @@ h1 {
     justify-content: center;
 }
 
+.board-container > button {
+    color: transparent;
+}
+
+.board-container > button.text-transition {
+    transition: all 0.5s;
+    color: black;
+}
+
 button {
     appearance: none;
     border: 0px solid transparent;

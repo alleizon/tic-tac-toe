@@ -112,11 +112,12 @@ const Game = (() => {
     if (gameboard[x][y]) return;
     gameboard[x][y] = curPlayer.name;
     e.target.textContent = curPlayer.symbol;
+    e.target.classList.add("text-transition");
     if (checkGameEnd(x, y)) return;
     curPlayer = curPlayer.name === 1 ? opponent : player;
     displayController.displayPlayer(curPlayer);
     if (opponent.type === "computer" && curPlayer.name === opponent.name)
-      playComputerTurn();
+      setTimeout(playComputerTurn, 300);
   };
 
   const getCurrentPlayer = () => curPlayer;
@@ -210,6 +211,7 @@ const displayController = (() => {
   const displayComputerMove = (x, y, symbol) => {
     const btn = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
     btn.textContent = symbol;
+    btn.classList.add("text-transition");
   };
 
   const selectOpponent = () => {
