@@ -1,6 +1,5 @@
 function Player(name, symbol, type) {
-  const score = 0;
-  return { name, symbol, score, type };
+  return { name, symbol, type };
 }
 
 const Game = (() => {
@@ -10,7 +9,7 @@ const Game = (() => {
     ["", "", ""],
   ];
 
-  const player1 = Player(1, "X", "human");
+  const player = Player(1, "X", "human");
   let curPlayer = null;
   let turns = 0;
   let opponent;
@@ -82,7 +81,6 @@ const Game = (() => {
     const winner = checkWin(x, y);
     turns += 1;
     if (winner) {
-      curPlayer.score += 1;
       displayController.declareWinner(winner);
       resetBoard();
       return 1;
@@ -102,20 +100,20 @@ const Game = (() => {
       gameboard[x][y] = opponent.name;
       displayController.displayComputerMove(x, y, opponent.symbol);
       if (checkGameEnd(x, y)) return;
-      curPlayer = player1;
+      curPlayer = player;
       displayController.displayPlayer(curPlayer);
     } else playComputerTurn();
   };
 
   const playTurn = (e) => {
-    if (!curPlayer) curPlayer = player1;
+    if (!curPlayer) curPlayer = player;
     const { x } = e.target.dataset;
     const { y } = e.target.dataset;
     if (gameboard[x][y]) return;
     gameboard[x][y] = curPlayer.name;
     e.target.textContent = curPlayer.symbol;
     if (checkGameEnd(x, y)) return;
-    curPlayer = curPlayer.name === 1 ? opponent : player1;
+    curPlayer = curPlayer.name === 1 ? opponent : player;
     displayController.displayPlayer(curPlayer);
     if (opponent.type === "computer" && curPlayer.name === opponent.name)
       playComputerTurn();
@@ -123,27 +121,22 @@ const Game = (() => {
 
   const getCurrentPlayer = () => curPlayer;
 
-  const changeOpponent = () => {
-    //
+  const createOpponent = (e) => {
+    opponent = Player(2, "O", e.target.id);
+    displayController.removePreGame();
   };
-  const createOpponent = (() => {
-    const player2 = Player(2, "O", "computer");
-    opponent = player2;
-  })();
 
   return {
     playTurn,
     resetBoard,
     getCurrentPlayer,
-    changeOpponent,
+    createOpponent,
   };
 })();
 
 const displayController = (() => {
-  const containerDiv = document.querySelector(".board-container");
-  const displayName = document.querySelector(".display-name");
-  const startBtn = document.querySelector("#start-btn");
-  const resetBtn = document.querySelector("#reset-btn");
+  const container = document.querySelector(".container");
+  const returnBtn = document.querySelector("#return");
 
   const addBtnListeners = (e) => {
     const player = Game.getCurrentPlayer();
@@ -152,7 +145,7 @@ const displayController = (() => {
     btns.forEach((element) => {
       element.addEventListener("click", Game.playTurn);
     });
-
+    const displayName = document.querySelector(".display-name");
     if (e.target.id === "start-btn") {
       displayName.textContent = `Player 1's turn`;
     } else displayName.textContent = `Player 1's turn`;
@@ -165,7 +158,7 @@ const displayController = (() => {
     });
   };
 
-  const createBoard = () => {
+  const createBoard = (div) => {
     for (let i = 0; i < 3; i += 1) {
       for (let j = 0; j < 3; j += 1) {
         const btn = document.createElement("button");
@@ -177,16 +170,18 @@ const displayController = (() => {
         btn.dataset.x = i;
         btn.dataset.y = j;
         btn.setAttribute("type", "button");
-        containerDiv.appendChild(btn);
+        div.appendChild(btn);
       }
     }
   };
 
   const declareTie = () => {
+    const displayName = document.querySelector(".display-name");
     displayName.textContent = "Game is a tie!";
     removeListeners();
   };
   const declareWinner = (winner) => {
+    const displayName = document.querySelector(".display-name");
     displayName.textContent = `Player ${winner.name} wins!`;
     removeListeners();
   };
@@ -208,6 +203,7 @@ const displayController = (() => {
   };
 
   const displayPlayer = (currentPlayer) => {
+    const displayName = document.querySelector(".display-name");
     displayName.textContent = `Player ${currentPlayer.name}'s turn`;
   };
 
@@ -216,16 +212,72 @@ const displayController = (() => {
     btn.textContent = symbol;
   };
 
-  startBtn.addEventListener("click", addBtnListeners);
-  resetBtn.addEventListener("click", resetBoard);
+  const selectOpponent = () => {
+    const humanBtn = document.querySelector("#human");
+    humanBtn.addEventListener("click", Game.createOpponent);
+    const computerBtn = document.querySelector("#computer");
+    computerBtn.addEventListener("click", Game.createOpponent);
+  };
+  selectOpponent();
+
+  const removePreGame = () => {
+    container.classList.remove("pre-game");
+    document.querySelector("h2").remove();
+    const btns = Array.from(document.querySelectorAll("button"));
+    btns.forEach((btn) => btn.remove());
+
+    const displayDiv = document.createElement("div");
+    displayDiv.classList.add("display-name");
+    displayDiv.textContent = "Waiting for the game to start!";
+    const containerDiv = document.createElement("div");
+    containerDiv.classList.add("board-container");
+    const startBtn = document.createElement("button");
+    startBtn.id = "start-btn";
+    startBtn.textContent = "Start";
+    startBtn.addEventListener("click", addBtnListeners);
+    const resetBtn = document.createElement("button");
+    resetBtn.id = "reset-btn";
+    resetBtn.textContent = "Reset";
+    resetBtn.addEventListener("click", resetBoard);
+    container.appendChild(displayDiv);
+    container.appendChild(containerDiv);
+    container.appendChild(startBtn);
+    container.appendChild(resetBtn);
+    createBoard(containerDiv);
+
+    returnBtn.style.display = "block";
+  };
+
+  const removeGame = () => {
+    const elements = container.children;
+    for (let i = 3; elements.length > 3; i = 3) {
+      elements.item(i).remove();
+    }
+
+    container.classList.add("pre-game");
+    const h2 = document.createElement("h2");
+    h2.textContent = "choose oppononent";
+    container.appendChild(h2);
+    const humanBtn = document.createElement("button");
+    humanBtn.id = "human";
+    humanBtn.textContent = "Human";
+    const computerBtn = document.createElement("button");
+    computerBtn.id = "computer";
+    computerBtn.textContent = "Computer";
+    container.appendChild(humanBtn);
+    container.appendChild(computerBtn);
+    selectOpponent();
+
+    returnBtn.style.display = "none";
+  };
+
+  returnBtn.addEventListener("click", removeGame);
 
   return {
-    createBoard,
     declareTie,
     declareWinner,
     displayPlayer,
     displayComputerMove,
+    removePreGame,
   };
 })();
-
-displayController.createBoard();
