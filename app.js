@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 function Player(name, symbol, type) {
   return { name, symbol, type };
 }
@@ -77,42 +78,55 @@ const Game = (() => {
     return null;
   };
 
-  const checkGameEnd = (x, y) => {
-    const winner = checkWin(x, y);
-    turns += 1;
+  const checkGameEnd = (x, y, isMin, isMiniMaxCall = false) => {
+    let winner;
+    if (isMiniMaxCall) {
+      const tmpPlayer = curPlayer;
+      curPlayer = isMin ? opponent : player;
+      winner = checkWin(x, y);
+      curPlayer = tmpPlayer;
+    } else winner = checkWin(x, y);
+
+    // turns += 1;
     if (winner) {
-      displayController.declareWinner(winner);
-      resetBoard();
-      return 1;
+      if (!isMiniMaxCall) {
+        displayController.declareWinner(winner);
+        resetBoard();
+      }
+      return winner.name === 1 ? 1 : 2;
     }
     if (turns === 9) {
-      displayController.declareTie();
-      resetBoard();
-      return 1;
+      if (!isMiniMaxCall) {
+        displayController.declareTie();
+        resetBoard();
+      }
+      return -1;
     }
     return 0;
   };
 
   const playComputerTurn = () => {
-    const x = Math.floor(Math.random() * 3);
-    const y = Math.floor(Math.random() * 3);
-    if (!gameboard[x][y]) {
-      gameboard[x][y] = opponent.name;
-      displayController.displayComputerMove(x, y, opponent.symbol);
-      if (checkGameEnd(x, y)) return;
+    const coords = computerAI.makeMove(gameboard, turns);
+    gameboard[coords[0]][coords[1]] = 2;
+    turns += 1;
+    if (checkGameEnd(coords[0], coords[1])) {
+      resetBoard();
+    } else {
+      displayController.displayComputerMove(coords[0], coords[1], "O");
       curPlayer = player;
-      displayController.displayPlayer(curPlayer);
-    } else playComputerTurn();
+    }
   };
 
   const playTurn = (e) => {
     if (!curPlayer) curPlayer = player;
+    if (curPlayer.name === 2 && curPlayer.type === "computer") return;
     const { x } = e.target.dataset;
     const { y } = e.target.dataset;
     if (gameboard[x][y]) return;
     gameboard[x][y] = curPlayer.name;
     e.target.textContent = curPlayer.symbol;
     e.target.classList.add("text-transition");
+    turns += 1;
     if (checkGameEnd(x, y)) return;
     curPlayer = curPlayer.name === 1 ? opponent : player;
     displayController.displayPlayer(curPlayer);
@@ -127,11 +141,25 @@ const Game = (() => {
     displayController.removePreGame();
   };
 
+  const testBoard = () => {
+    gameboard[0][0] = 1;
+    gameboard[0][1] = 2;
+    gameboard[0][2] = 1;
+    gameboard[1][0] = 2;
+    gameboard[1][1] = 2;
+    gameboard[1][2] = 1;
+    curPlayer = player;
+    turns = 6;
+  };
+
   return {
     playTurn,
     resetBoard,
     getCurrentPlayer,
     createOpponent,
+    checkGameEnd,
+    testBoard,
+    gameboard,
   };
 })();
 
@@ -290,3 +318,66 @@ const displayController = (() => {
     removePreGame,
   };
 })();
+
+const computerAI = (() => {
+  const miniMax = (gameboard, depth, isMin, x, y, turns) => {
+    const result = Game.checkGameEnd(x, y, !isMin, true);
+    if (result === 2) return -10;
+    if (result === 1) return 10;
+    if (turns === 9) return 0;
+
+    if (!isMin) {
+      let bestScore = -100;
+      for (let i = 0; i < 3; i += 1) {
+        for (let j = 0; j < 3; j += 1) {
+          if (!gameboard[i][j]) {
+            gameboard[i][j] = 1;
+            bestScore = Math.max(
+              bestScore,
+              miniMax(gameboard, depth + 1, !isMin, i, j, turns + 1)
+            );
+            gameboard[i][j] = "";
+          }
+        }
+      }
+      return bestScore;
+    }
+    let bestScore = 100;
+    for (let i = 0; i < 3; i += 1) {
+      for (let j = 0; j < 3; j += 1) {
+        if (!gameboard[i][j]) {
+          gameboard[i][j] = 2;
+          bestScore = Math.min(
+            bestScore,
+            miniMax(gameboard, depth + 1, !isMin, i, j, turns + 1)
+          );
+          gameboard[i][j] = "";
+        }
+      }
+    }
+    return bestScore;
+  };
+
+  const makeMove = (gameboard, turns) => {
+    let bestScore = 100;
+    let coords;
+    for (let i = 0; i < 3; i += 1) {
+      for (let j = 0; j < 3; j += 1) {
+        if (!gameboard[i][j]) {
+          gameboard[i][j] = 2;
+          const score = miniMax(gameboard, 0, false, i, j, turns + 1);
+          gameboard[i][j] = "";
+          if (score < bestScore) {
+            bestScore = score;
+            coords = [i, j];
+          }
+        }
+      }
+    }
+    return coords;
+  };
+
+  return { makeMove };
+})();
+
+//
