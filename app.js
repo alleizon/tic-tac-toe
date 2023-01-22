@@ -236,7 +236,7 @@ const displayController = (() => {
 
     const displayDiv = document.createElement("div");
     displayDiv.classList.add("display-name");
-    displayDiv.textContent = "Waiting for the game to start!";
+    displayDiv.textContent = "Press 'Start'";
     const containerDiv = document.createElement("div");
     containerDiv.classList.add("board-container");
     const startBtn = document.createElement("button");
@@ -275,6 +275,7 @@ const displayController = (() => {
     container.appendChild(humanBtn);
     container.appendChild(computerBtn);
     selectOpponent();
+    Game.resetBoard();
 
     returnBtn.style.display = "none";
   };
