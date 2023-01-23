@@ -1,4 +1,3 @@
-/* eslint-disable no-param-reassign */
 function Player(name, symbol, type) {
   return { name, symbol, type };
 }
@@ -87,7 +86,6 @@ const Game = (() => {
       curPlayer = tmpPlayer;
     } else winner = checkWin(x, y);
 
-    // turns += 1;
     if (winner) {
       if (!isMiniMaxCall) {
         displayController.declareWinner(winner);
@@ -112,9 +110,10 @@ const Game = (() => {
     if (checkGameEnd(coords[0], coords[1])) {
       resetBoard();
     } else {
-      displayController.displayComputerMove(coords[0], coords[1], "O");
       curPlayer = player;
     }
+    displayController.displayComputerMove(coords[0], coords[1], "O");
+    displayController.displayPlayer(curPlayer);
   };
 
   const playTurn = (e) => {
@@ -141,25 +140,12 @@ const Game = (() => {
     displayController.removePreGame();
   };
 
-  const testBoard = () => {
-    gameboard[0][0] = 1;
-    gameboard[0][1] = 2;
-    gameboard[0][2] = 1;
-    gameboard[1][0] = 2;
-    gameboard[1][1] = 2;
-    gameboard[1][2] = 1;
-    curPlayer = player;
-    turns = 6;
-  };
-
   return {
     playTurn,
     resetBoard,
     getCurrentPlayer,
     createOpponent,
     checkGameEnd,
-    testBoard,
-    gameboard,
   };
 })();
 
@@ -176,7 +162,9 @@ const displayController = (() => {
     });
     const displayName = document.querySelector(".display-name");
     if (e.target.id === "start-btn") {
-      displayName.textContent = `Player 1's turn`;
+      displayName.textContent = player
+        ? `Player ${player.name}'s turn`
+        : "Player 1's turn";
     } else displayName.textContent = `Player 1's turn`;
   };
 
